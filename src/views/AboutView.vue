@@ -60,7 +60,7 @@ export default {
         this.active = sort[index]
       }
       this.btnLoading = false
-      this.$message.success(`恭喜你获得 [ ${this.awardsList[this.active].title} ]`)
+      this.$message.success(`恭喜你获得 [ ${this.awardsList[this.active - 1].title} ]`)
     },
     waitTime(delayInMS) {
       return new Promise((resolve) => setTimeout(resolve, delayInMS))
