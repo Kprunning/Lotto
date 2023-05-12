@@ -1,13 +1,16 @@
 <template>
   <div class="about">
-    <div class="welcome-title">丽艳专属抽奖工具</div>
+    <div class="welcome-title">宝子专属抽奖工具</div>
     <div class="lotto-wrapper">
-      <div class="award-box" v-for="item in awardsList" :key="item.sort" :style="{borderColor: active === item.sort ? 'red' : '#409EFF'}">
+      <div class="award-box" :class="item.flag ? 'taken-award' : 'un-taken-award'" v-for="item in awardsList" :key="item.sort"
+           :style="{borderColor: active === item.sort ? 'red' : '#409EFF'}">
         <img :src="item.src" alt="">
         <span class="title">{{ item.title }}</span>
       </div>
     </div>
-    <el-button type="primary" @click="beginLotto" :loading="btnLoading">开始抽奖</el-button>
+    <el-button type="primary" @click="beginLotto" :loading="btnLoading" :disabled="this.leftAward.length === 0 || this.times === 0">
+      {{ times ? `您有${times}次抽奖机会` : '抽奖机会已用完' }}
+    </el-button>
   </div>
 </template>
 
@@ -24,21 +27,29 @@ export default {
         {sort: 5, title: '', src: ''},
         {sort: 6, title: '红肠', src: new URL('@/assets/img/sausage.webp', import.meta.url).href},
         {sort: 7, title: '裙子', src: new URL('@/assets/img/skirt.webp', import.meta.url).href},
-        {sort: 8, title: '现金', src: new URL('@/assets/img/money.jpg', import.meta.url).href},
+        {sort: 8, title: '现金100', src: new URL('@/assets/img/money.jpg', import.meta.url).href},
         {sort: 9, title: '爬山', src: new URL('@/assets/img/mountain.webp', import.meta.url).href}
       ],
+      awardSort: [1, 2, 3, 6, 9, 8, 7, 4],
+      leftAward: [],
       active: 0,
-      btnLoading: false
+      btnLoading: false,
+      interval: null,
+      times: 3
     }
   },
   methods: {
     async beginLotto() {
+
       this.btnLoading = true
       // 旋转顺序
       let sort = [1, 2, 3, 6, 9, 8, 7, 4]
       // 旋转3到6圈
       let round = Math.floor(Math.random() * 3) + 3
-      let step = Math.floor(Math.random() * 8) + 1
+      // 获取随机奖品
+      let randomIndex = Math.floor(Math.random() * this.leftAward.length)
+      let step = this.awardSort.indexOf(this.leftAward[randomIndex]) + 1
+      this.leftAward.splice(randomIndex, 1)
       let slow = Math.floor(Math.random() * 5) + 2
       let index = 0
       let delay = 100
@@ -59,12 +70,19 @@ export default {
         }
         this.active = sort[index]
       }
+      await this.waitTime(1000)
       this.btnLoading = false
       this.$message.success(`恭喜你获得 [ ${this.awardsList[this.active - 1].title} ]`)
+      // 做中奖纪录
+      this.awardsList[this.active - 1].flag = true
+      this.times -= 1
     },
     waitTime(delayInMS) {
       return new Promise((resolve) => setTimeout(resolve, delayInMS))
     }
+  },
+  mounted() {
+    this.leftAward = [...this.awardSort]
   }
 }
 
@@ -127,6 +145,22 @@ export default {
         }
       }
 
+      .taken-award {
+        position: relative;
+
+        &:after {
+          content: '';
+          height: 100%;
+          width: 100%;
+          display: block;
+          background-color: gray;
+          opacity: 80%;
+          z-index: 9;
+          top: -151px;
+          left: 0;
+        }
+      }
+
       div:nth-child(5) {
         background-color: #fff;
         visibility: hidden;
@@ -136,8 +170,10 @@ export default {
 
     .el-button {
       margin-top: 20px;
-      width: 100px;
-      height: 50px;
+      width: 300px;
+      height: 100px;
+      font-size: 30px;
+      font-weight: bold;
     }
   }
 }
